@@ -1,6 +1,31 @@
-# forcing CC = gcc isn't a good idea but works for now.
-CC = gcc
-CFLAGS += -std=c89 -Wpedantic -pedantic-errors -Werror -Wall -Wextra
+debug ?= 0
+NAME := jot
+INCLUDE_DIR := include
+SRC_DIR := src
+TEST_DIR := test
+BUILD_DIR := build
+BIN_DIR := bin
+
+# For containing make's dependency (.d) files. Read more here: https://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
+DEPS_DIR := deps
+
+# Set Clang Options
+#CC = clang
+#CFLAGS += -std=c99
+#CFLAGS += -Wpedantic
+#CFLAGS += -Werror
+#CFLAGS += -Wall
+#CFLAGS += -Wextra
+#CFLAGS += -Wmost
+
+# set c standard
+CFLAGS += -std=c89
+
+#set headers dir
+CFLAGS += -I./$(INCLUDE_DIR)
+
+# poor man's static analyzer
+CFLAGS += -Wpedantic -pedantic-errors -Werror -Wall -Wextra
 CFLAGS += -Waggregate-return
 CFLAGS += -Wbad-function-cast
 CFLAGS += -Wcast-align
@@ -24,28 +49,43 @@ CFLAGS += -Wunreachable-code
 CFLAGS += -Wunused-but-set-parameter
 CFLAGS += -Wwrite-strings
 
-# Add debug flags
-CFLAGS += -g -O0
+# Optimization settings
+ifeq ($(debug), 1)
+	CFLAGS := $(CFLAGS) -g -O0
+else
+	CFLAGS := $(CFLAGS) -O3 -DNDEBUG
+endif
 
-#CC = clang
-#CFLAGS += -std=c99
-#CFLAGS += -Wpedantic
-#CFLAGS += -Werror
-#CFLAGS += -Wall
-#CFLAGS += -Wextra
-#CFLAGS += -Wmost
+# Linker opts. Remember to set LDFLAGS before objs and LDLIBS after objs to avoid undefined refs when linking.
+#LDFLAGS += -L/$(LIBS)/libspecific
+#LDLIBS += -lm, -lpthread
 
-NAME := jot
-BIN_DIR := bin
+SRC := $(wildcard $(SRC_DIR)/*.c)
+OBJS := $(SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+
+DEPS := $(SRC:$(SRC_DIR)/%.c=$(DEPS_DIR)/%.d)
+DEPSFLAGS := -MMD -MP -MF $(DEPS_DIR)/$*.d
 
 .PHONY: all
 all: $(NAME)
 
-$(NAME): $(BIN_DIR)
-	@$(CC) $(CFLAGS) $(NAME).c -o $(BIN_DIR)/$(NAME)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -MMD -MP -MF $(DEPS_DIR)/$*.d -c $< -o $@
 
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
+$(NAME): $(OBJS) | setup
+	$(CC) $(CFLAGS) -o $(BIN_DIR)/$@ $^
 
+.PHONY: test
+test:
+	@echo "There are no tests yet. RIP."
+
+.PHONY: setup
+setup:
+	mkdir -p $(BUILD_DIR) $(BIN_DIR) $(DEPS_DIR)
+
+.PHONY: clean
 clean:
-	rm -f $(BIN_DIR)/*
+	rm -f $(BUILD_DIR)/*.o $(BIN_DIR)/* $(DEPS_DIR)/*.d
+
+# includes our generated .d deps files with the `include` directive. `-` at the beginning makes it not an error if the file doesn't exist (such as it hasn't be generated yet).
+-include $(DEPS)
