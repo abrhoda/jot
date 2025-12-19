@@ -4,7 +4,14 @@
 
 
 int myers_diff(char **start_lines, size_t start_line_count, char **end_lines, size_t end_line_count) {
-  size_t i;
+  size_t max = start_line_count + end_line_count;
+  size_t d, k;
+
+  int *d_values = malloc(((max*2)+ 1) * sizeof(int)); /* d can go from [-d, d] */
+  int *center = &d_values[max+1];
+  int x, y;
+
+  /*
   for (i = 0; i < start_line_count; ++i){
     printf("%lu. %s\n", i, start_lines[i]);
   }
@@ -12,6 +19,7 @@ int myers_diff(char **start_lines, size_t start_line_count, char **end_lines, si
   for (i = 0; i < end_line_count; ++i){
     printf("%lu. %s\n", i, end_lines[i]);
   }
+  */
 
   /* Basic algorithm from Myers diff paper:
    *
@@ -22,7 +30,10 @@ int myers_diff(char **start_lines, size_t start_line_count, char **end_lines, si
    *      The D-path is an optimal solution.
    *      Stop
    */
-
+  for (d = 0, d <= max; ++d) {
+    for (k = -1*d; k <= d; k += 2) {
+    }
+  }
 
   return 0;
 }

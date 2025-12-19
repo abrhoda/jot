@@ -51,7 +51,7 @@ CFLAGS += -Wunused-but-set-parameter
 CFLAGS += -Wwrite-strings
 
 # Sanitizers
-ifneq ($(sanitize), 0)
+ifeq ($(sanitize), 1)
 	CFLAGS += -fsanitize=address,leak,undefined
 endif
 

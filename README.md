@@ -13,7 +13,7 @@ rules:
 
 There are some options that can be set in the Makefile:
 - `debug`: setting to 1 enables a debug build by adding the `-g` and `-O0` CFLAGS (defaults to 0 which set `-03` and `DNDEBUG` CFLAGS)
-- `sanitize`: setting to 1 disables the use of `-fsanitize=address,leak,undefined` option. (defaults to 0 which enables this option) (requires `libasan`, `liblsan`, and `libubsan`)
+- `sanitize`: setting to 1 enables the use of `-fsanitize=address,leak,undefined` option. (defaults to 0 which disables this option) (requires `libasan`, `liblsan`, and `libubsan`)
 
 
 _note: please see warning at the bottom of this README.md if you plan to run where CC != gcc_
