@@ -1,4 +1,5 @@
 debug ?= 0
+sanitize ?= 0
 NAME := jot
 INCLUDE_DIR := include
 SRC_DIR := src
@@ -18,13 +19,13 @@ DEPS_DIR := deps
 #CFLAGS += -Wextra
 #CFLAGS += -Wmost
 
-# set c standard
+# Set c standard
 CFLAGS += -std=c89
 
-#set headers dir
+# Set headers dir
 CFLAGS += -I./$(INCLUDE_DIR)
 
-# poor man's static analyzer
+# Poor man's static analyzer
 CFLAGS += -Wpedantic -pedantic-errors -Werror -Wall -Wextra
 CFLAGS += -Waggregate-return
 CFLAGS += -Wbad-function-cast
@@ -49,11 +50,16 @@ CFLAGS += -Wunreachable-code
 CFLAGS += -Wunused-but-set-parameter
 CFLAGS += -Wwrite-strings
 
+# Sanitizers
+ifneq ($(sanatize), 0)
+	CFLAGS += -fsanitize=address,leak,undefined
+endif
+
 # Optimization settings
 ifeq ($(debug), 1)
-	CFLAGS := $(CFLAGS) -g -O0
+	CFLAGS += -g -O0
 else
-	CFLAGS := $(CFLAGS) -O3 -DNDEBUG
+	CFLAGS += -O3 -DNDEBUG
 endif
 
 # Linker opts. Remember to set LDFLAGS before objs and LDLIBS after objs to avoid undefined refs when linking.
@@ -64,7 +70,6 @@ SRC := $(wildcard $(SRC_DIR)/*.c)
 OBJS := $(SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 
 DEPS := $(SRC:$(SRC_DIR)/%.c=$(DEPS_DIR)/%.d)
-DEPSFLAGS := -MMD -MP -MF $(DEPS_DIR)/$*.d
 
 .PHONY: all
 all: $(NAME)
@@ -78,6 +83,10 @@ $(NAME): $(OBJS) | setup
 .PHONY: test
 test:
 	@echo "There are no tests yet. RIP."
+
+.PHONY: check
+check:
+	@echo "I should use valgrind with a normal human but instead I'm using sanitizer options right now. I'll probably regret that decision later."
 
 .PHONY: setup
 setup:
