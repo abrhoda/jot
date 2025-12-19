@@ -3,6 +3,9 @@
 #include <string.h>
 #include <errno.h>
 
+/*
+ * FIXME: the file that filename points to must not be empty
+ */
 enum file_error_code write_file_lines_to_file(const char *filename, struct file *file) {
   char buffer[BUFFER_SIZE];
   char **temp_lines = NULL;
