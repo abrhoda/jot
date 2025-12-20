@@ -5,24 +5,20 @@
 
 
 static size_t shortest_edit(char **start_lines, size_t start_lines_count, char **end_lines, size_t end_lines_count) {
-  size_t max = start_lines_count + end_lines_count;
-  size_t d, k;
-  size_t x, y;
+  /* FIXME unsafe cast of size_t to int */
+  int m = start_lines_count;
+  int n = end_lines_count;
+  int max = m + n;
+  int d, k, x, y; 
   int *v = malloc(((max*2)+ 1) * sizeof(int)); /* v can go from [-d, d] */
+  int k_centered = max + 1; /* midpoint of v because c doesn't support negative indexing */
 
-  /* because the array is 2*max + 1, the length is always odd and the midpoint is always max + 1 into the array
-  int *center = &v[max + 1];
-  */
+  /* default non-0 sentinal value */
+  for (k = 0; k < (max*2)+1; ++k) {
+    v[k] = -1;
+  }
+  v[k_centered] = 0;
 
-  /*
-  for (i = 0; i < start_lines_count; ++i){
-    printf("%lu. %s\n", i, start_lines[i]);
-  }
-  printf("\n\n=========================================================\n\n");
-  for (i = 0; i < end_lines_count; ++i){
-    printf("%lu. %s\n", i, end_lines[i]);
-  }
-  */
 
   /* Basic algorithm from Myers diff paper:
    *
@@ -33,32 +29,38 @@ static size_t shortest_edit(char **start_lines, size_t start_lines_count, char *
    *      The D-path is an optimal solution.
    *      Stop
    */
-  printf("\n\nFinding shortest edit distance\n\n");
-  v[1] = 0; /* is this needed? this might be center + 1 if i am taking center = max + 1 */
+
+  printf("\n\nFinding shortest edit distance: ");
+
   for (d = 0; d <= max; ++d) {
-    printf("d = %lu\n", d);
+    /* printf("d = %d\n", d); */
+
     for (k = -1*d; k <= d; k += 2) {
-      /*FIXME wrong because k is size_t and cannot be negative */
-      printf("k = %lu\n", k);
-      if ((k == -1*d) || (k != d && v[k-1] < v [k+1])) {
-        x = v[k+1];
+      k_centered = max + k;
+
+      /*
+      printf("k = %d\n", k);
+      printf("k_centered = %d\n", k_centered);
+      */
+
+      if ((k == -1*d) || (k != d && v[k_centered-1] < v[k_centered+1])) {
+        x = v[k_centered+1];
       } else {
-        x = v[k-1]+1;
+        x = v[k_centered-1]+1;
       }
+      /* printf("x = %d\n", x); */
       y = x - k;
-      printf("x = %lu\n", x);
-      printf("y = %lu\n", y);
+      /* printf("y = %d\n", y); */
 
        /* FIXME strcmp is fine because we know our strings are properly null terminated. RIGHT? */
-      while (x < start_lines_count && y < end_lines_count && strcmp(start_lines[x], end_lines[y]) == 0) {
-        printf("taking diag step @ (%lu,%lu)\n", x, y);
+      while (x < m && y < n && strcmp(start_lines[x], end_lines[y]) == 0) {
+        /* printf("taking diag step @ (%d,%d)\n", x, y); */
         x++;
         y++;
       }
-      v[k] = x;
-      printf("set v[%lu] = %lu\n", k, x);
-      if (x >= start_lines_count && y >= end_lines_count) {
-        printf("found shorts amount! returning.\n");
+      v[k_centered] = x;
+      /* printf("set v[%d] = %d\n", k, x); */
+      if (x >= m && y >= n) {
         free(v);
         return d;
       }
