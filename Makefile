@@ -1,6 +1,8 @@
 debug ?= 0
 sanitize ?= 0
 NAME := jot
+FORMATTER := clang-format
+LINTER := clang-tidy
 INCLUDE_DIR := include
 SRC_DIR := src
 TEST_DIR := test
@@ -83,6 +85,10 @@ $(NAME): $(OBJS) | setup
 .PHONY: test
 test:
 	@echo "There are no tests yet. RIP."
+
+.PHONY: format
+format:
+	$(FORMATTER) --style=file -i $(SRC_DIR)/*.c $(INCLUDE_DIR)/*.h $(TEST_DIR)/*.c
 
 .PHONY: check
 check:

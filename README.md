@@ -1,6 +1,14 @@
 # jot
 Diffing and versioning tool written in c89.
 
+## Overview
+A diff is an operation based on solving the [longest common sequence](https://en.wikipedia.org/wiki/Longest_common_subsequence) (or LCS) problem. The idea is to take a starting state (a string of text or a file itself) and the end state, then produce the smallest number of changes that can be applied to the start state to reach the end state. It does this by minimzing the number of deletions and insertions that need to be applied ot the start state to reach the end state.
+
+This might sound a little like the Levenshtein distance (or LD) string metric and it is quite similar. However, the difference between the LSC and LD is that LCS doesn't allow outright subtitutions whereas LD allows for substitutions. This is an important differentiating factor between the edit distance metrics.
+
+## Part 1 - Diff 2 files
+For the first part of this tool, I want to diff 2 files using a diffing algorithm known a Myers diffing algorithm. It is described in detail by Eugene Myers [here](http://www.xmailserver.org/diff2.pdf).
+
 ## Building
 Just use the Makefile.
 
@@ -8,6 +16,7 @@ rules:
 - `make setup` creates the intermediate `build/` and `deps/` directories as well as the output binary directory, `bin/`.
 - `make all` (default rule) will produce the object files in the `build/` directory and then produce the output binary, called `jot`, in the `bin/` directory. It will also generate dependency files for make in the `deps/` directory to help make build faster.
 - `make clean` removes everything in the `bin`, `build`, `deps/` dirs.
+- `make format` formats `src/*.c`, `include/*.h`, and `test/*.c` files according to the provided `.clang-format` file.
 - [not impl] `make test` run the tests in `test/`.
 - [not impl] `make check` runs valgrind against the output binary.
 
@@ -18,13 +27,14 @@ There are some options that can be set in the Makefile:
 
 _note: please see warning at the bottom of this README.md if you plan to run where CC != gcc_
 
-## Overview
-A diff is an operation based on solving the [longest common sequence](https://en.wikipedia.org/wiki/Longest_common_subsequence) (or LCS) problem. The idea is to take a starting state (a string of text or a file itself) and the end state, then produce the smallest number of changes that can be applied to the start state to reach the end state. It does this by minimzing the number of deletions and insertions that need to be applied ot the start state to reach the end state.
+## Format and Styling
+`clang-format` and `clang-tidy` are used. Ensure both are installed while **building** the project to ahere to guidelines. At the root of the project are the `.clang-format` and `.clang-tidy` files which are described in detail below.
 
-This might sound a little like the Levenshtein distance (or LD) string metric and it is quite similar. However, the difference between the LSC and LD is that LCS doesn't allow outright subtitutions whereas LD allows for substitutions. This is an important differentiating factor between the edit distance metrics.
+### clang-format
+`clang-format --style=google --dump-config > .clang-format` was run and is used through the build process. The Google style isn't the absolute best but it's what I like the most. Some modifications might be added to the stock Google style if/when I dislike something. For now, it is a direct output without modifications.
 
-## Part 1 - Diff 2 files
-For the first part of this tool, I want to diff 2 files using a diffing algorithm known a Myers diffing algorithm. It is described in detail by Eugene Myers [here](http://www.xmailserver.org/diff2.pdf).
+### clang-tidy
+`clang-tidy -checks='-*,bugprone-*,cert-*,clang-analyzer-*,concurrency-*,linuxkernel-*,llvm-*,misc-*,modernize-*,performance-*,portability-*,readability-*' --dump-config > .clang-tidy` was run and is also used through the process. This is a very strict set of guidelines which should always be adhered to. A change/addition/removal of a check should be done with a documented reason of why the check cannot be adhered to for this codebase.
 
 ## Warning
 I have only compiled and run with `gnu make` and `gcc 15.2` (though, I imagine any gcc version works because this is in ANSI C). That is what the Makefile is geared towards with its current CFLAGS. If cc != gcc on your machine, run the Makefile with `make CC=gcc` for now.

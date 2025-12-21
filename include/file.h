@@ -14,31 +14,29 @@ enum file_error_code {
 };
 
 struct file {
-  const char *name;
+  const char* name;
   size_t line_count;
-  char **lines;
+  char** lines;
 };
 /*
  * @brief frees the entire file struct
  *
- * @param file The file struct to free. Will be set to NULL at the end of this function.
+ * @param file The file struct to free. Will be set to NULL at the end of this
+ * function.
  */
-void free_file(struct file *file);
-
-
+void free_file(struct file* file);
 
 /*
  * @brief reads entire file into the provided file stuct.
  *
- * @detail 
+ * @detail
  *
  * @param filename Name of the file that will be read into the buffer
  * @param file Destination file struct container to hold file lines.
  *
  * @return 0 for success, non-0 for error
  */
-enum file_error_code write_file_lines_to_file(const char *filename, struct file *file);
-
-
+enum file_error_code write_file_lines_to_file(const char* filename,
+                                              struct file* file);
 
 #endif

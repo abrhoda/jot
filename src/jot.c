@@ -1,13 +1,14 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #include "diff.h"
 #include "file.h"
 
-int main(int argc, char **argv) {
-  const char *usage = "jot - a diffing and version tool\n\tUsage: jot <file1> <file2>\n";
+int main(int argc, char** argv) {
+  const char* usage =
+      "jot - a diffing and version tool\n\tUsage: jot <file1> <file2>\n";
   struct file fstart, fend;
   int result = 0;
 
