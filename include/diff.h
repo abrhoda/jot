@@ -1,15 +1,21 @@
-#ifndef JOT_DIFF_H
-#define JOT_DIFF_H
+#ifndef DIFF_H
+#define DIFF_H
 #include <stddef.h>
 
-struct graph_node {
-  struct graph_node* left;
-  struct graph_node* right;
+enum diff_exit_code {
+  DIFF_EC_SUCCESS = 0,
+  DIFF_EC_FILES_TOO_LARGE = -1,
+  DIFF_EC_OOM = -2,
+  DIFF_EC_UNREACHABLE = -3
 };
 
-struct graph {
-  struct graph_node* root;
+struct diff_result {
+  void *buffer;
+  size_t buffer_length;
+  enum diff_exit_code exit_code;
 };
+
+void free_diff_result_buffer(struct diff_result *diff_result);
 
 /*
  * @param start_lines The array of strings that are the lines of the start file
@@ -27,9 +33,9 @@ start_lines_count, char **end_lines, size_t end_lines_count);
  * @param end_lines The array of strings that are the lines of the end file
  * @param end_lines_count The length of the end array
  *
- * @return 0 for success, non-0 for failure.
+ * @return diff_exit_code value.
  */
-void myers_diff(char** start_lines, size_t start_lines_count, char** end_lines,
+struct diff_result myers_diff(char** start_lines, size_t start_lines_count, char** end_lines,
                 size_t end_lines_count);
 
 #endif

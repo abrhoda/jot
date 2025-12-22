@@ -19,37 +19,36 @@
 /* FIXME this is converting start_lines_count and end_lines_count to ints. they
  * should stay size_t (the correct type) and m, n, max, and d should all be
  * size_t*/
-static size_t shortest_edit(char** start_lines, size_t start_lines_count,
+static int shortest_edit(char** start_lines, size_t start_lines_count,
                             char** end_lines, size_t end_lines_count) {
-  /* variable names follow the naming in the Myers Diff Algorithm paper */
-  int m, n, max, d, k, x, y;
+  /* NOTE: variable names follow the naming in the Myers Diff Algorithm paper 
+   * NOLINTBEGIN(readability-identifier-length)
+   */
+  int m;
+  int n;
+  int max;
+  int d;
+  int k;
+  int x;
+  int y;
   int* v = NULL;
+  /* NOLINTEND(readability-identifier-length)*/
 
   /* midpoint of v because c doesn't support negative indexing */
   int k_centered;
 
-  /* FIXME make these asserts? `if` allows a non-exiting condition. */
-  /* d = [0, max] where max = start_lines_count + end_lines_count so check that
+  /* FIXME this is kind of dirty but this ensures that converting start/end
+   * lines to int isn't actually a narrowing op. This conversion should be avoided.
+   *
+   * d = [0, max] where max = start_lines_count + end_lines_count so check that
    * start_lines_count and end_lines_count can be converted to ints */
   if (start_lines_count + end_lines_count > INT_MAX) {
     fprintf(stderr, "Max difference between lines of files too large.\n");
-    return 0;
+    return DIFF_EC_FILES_TOO_LARGE;
   }
 
-  if (start_lines_count > (INT_MAX / 2)) {
-    fprintf(stderr, "Too many lines in start_lines (%lu). Must be %d or less\n",
-            start_lines_count, INT_MAX / 2);
-    return 0;
-  }
-
-  if (end_lines_count > (INT_MAX / 2)) {
-    fprintf(stderr, "Too many lines in end_lines (%lu). Must be %d or less\n",
-            end_lines_count, INT_MAX / 2);
-    return 0;
-  }
-
-  m = start_lines_count;
-  n = end_lines_count;
+  m = (int) start_lines_count;
+  n = (int) end_lines_count;
   max = m + n;
   k_centered = max + 1;
 
@@ -57,6 +56,7 @@ static size_t shortest_edit(char** start_lines, size_t start_lines_count,
   v = malloc(((max * 2) + 1) * sizeof(int));
   if (v == NULL) {
     fprintf(stderr, "Couldn't allocate v buffer\n");
+    return DIFF_EC_OOM;
   }
 
   /* add sentinal values to array */
@@ -93,22 +93,29 @@ static size_t shortest_edit(char** start_lines, size_t start_lines_count,
 
   assert(0 && "Shortest edit script is longer than max.");
   free(v);
-  return 0;
+  return DIFF_EC_UNREACHABLE;
+}
+void free_diff_result_buffer(struct diff_result *diff_result) {
+  if (diff_result == NULL) {
+    return;
+  }
+  free(diff_result->buffer);
 }
 
-void myers_diff(char** start_lines, size_t start_lines_count, char** end_lines,
+struct diff_result myers_diff(char** start_lines, size_t start_lines_count, char** end_lines,
                 size_t end_lines_count) {
-  size_t i;
+  size_t count;
+  struct diff_result result = {NULL, 0, 0};
   printf("COMPARING:\n\n");
-  for (i = 0; i < start_lines_count; ++i) {
-    printf("%lu. %s\n", i, start_lines[i]);
+  for (count = 0; count < start_lines_count; ++count) {
+    printf("%lu. %s\n", count, start_lines[count]);
   }
   printf("\n\n=========================================================\n\n");
-  for (i = 0; i < end_lines_count; ++i) {
-    printf("%lu. %s\n", i, end_lines[i]);
+  for (count = 0; count < end_lines_count; ++count) {
+    printf("%lu. %s\n", count, end_lines[count]);
   }
 
-  i = shortest_edit(start_lines, start_lines_count, end_lines, end_lines_count);
-  printf("Achieved in %lu edits\n", i);
-  return;
+  result.exit_code = shortest_edit(start_lines, start_lines_count, end_lines, end_lines_count);
+  printf("Achieved in %lu edits\n", count);
+  return result;
 }

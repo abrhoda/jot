@@ -7,13 +7,13 @@
 /*
  * FIXME: the file that filename points to must not be empty
  */
-enum file_error_code write_file_lines_to_file(const char* filename,
+enum file_exit_code write_file_lines_to_file(const char* filename,
                                               struct file* file) {
   char buffer[BUFFER_SIZE];
   char** temp_lines = NULL;
 
   /* initial amount of lines. Will realloc anyway */
-  size_t initial_size = 100;
+  size_t initial_size = INITIAL_LINE_SIZE;
   size_t current_lines_size = initial_size;
   size_t line_count = 0;
   size_t line_len;
@@ -50,7 +50,7 @@ enum file_error_code write_file_lines_to_file(const char* filename,
     if (file->lines[line_count] == NULL) {
       /* free all previously parsed strings */
       fprintf(stderr, "Error allocating line at %ld\n", line_count);
-      free_file(file);
+      free_file_lines(file);
       fclose(f);
       return FILE_EC_OUT_OF_MEMORY;
     }
@@ -80,7 +80,7 @@ enum file_error_code write_file_lines_to_file(const char* filename,
       if (temp_lines == NULL) {
         /* free all previously parsed strings */
         fprintf(stderr, "Error reallocating lines\n");
-        free_file(file);
+        free_file_lines(file);
         fclose(f);
         return FILE_EC_OUT_OF_MEMORY;
       }
@@ -108,15 +108,15 @@ enum file_error_code write_file_lines_to_file(const char* filename,
   return FILE_EC_SUCCESS;
 }
 
-void free_file(struct file* file) {
-  size_t i = 0;
-  if (file->lines == NULL) {
+void free_file_lines(struct file* file) {
+  size_t len = 0;
+  if (file == NULL || file->lines == NULL) {
     return;
   }
 
-  while (i < file->line_count) {
-    free(file->lines[i]);
-    ++i;
+  while (len < file->line_count) {
+    free(file->lines[len]);
+    ++len;
   }
   free(file->lines);
 }
