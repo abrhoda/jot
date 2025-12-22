@@ -12,15 +12,6 @@ BIN_DIR := bin
 # For containing make's dependency (.d) files. Read more here: https://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
 DEPS_DIR := deps
 
-# Set Clang Options
-#CC = clang
-#CFLAGS += -std=c99
-#CFLAGS += -Wpedantic
-#CFLAGS += -Werror
-#CFLAGS += -Wall
-#CFLAGS += -Wextra
-#CFLAGS += -Wmost
-
 # Set c standard
 CFLAGS += -std=c89
 
@@ -36,7 +27,6 @@ CFLAGS += -Wcast-qual
 CFLAGS += -Wdeclaration-after-statement
 CFLAGS += -Wfloat-equal
 CFLAGS += -Wformat=2
-CFLAGS += -Wlogical-op
 CFLAGS += -Wmissing-declarations
 CFLAGS += -Wmissing-include-dirs
 CFLAGS += -Wmissing-prototypes
@@ -51,6 +41,18 @@ CFLAGS += -Wundef
 CFLAGS += -Wunreachable-code
 CFLAGS += -Wunused-but-set-parameter
 CFLAGS += -Wwrite-strings
+
+# Setting compiler specific CFLAGS
+GCC_CFLAGS := -Wtype-limits -Wlogical-op
+CLANG_CFLAGS := -Wmost
+LINT_CFLAGS := $(CFLAGS) $(CLANG_CFLAGS)
+
+COMPILER_VERSION := $(shell $(CC) --version | tr '[:upper:]' '[:lower:]')
+ifneq ('', '$(findstring gcc,$(COMPILER_VERSION))')
+	CFLAGS += $(GCC_CFLAGS)
+else ifneq ('', '$(findstring clang,$(COMPILER_VERSION))')
+	CFLAGS += $(CLANG_CFLAGS)
+endif
 
 # Sanitizers
 ifeq ($(sanitize), 1)
@@ -89,6 +91,10 @@ test:
 .PHONY: format
 format:
 	$(FORMATTER) --style=file -i $(SRC_DIR)/*.c $(INCLUDE_DIR)/*.h $(TEST_DIR)/*.c
+
+.PHONY: lint
+lint:
+	$(LINTER) --config-file=.clang-tidy $(SRC_DIR)/*.c $(INCLUDE_DIR)/*.h $(TEST_DIR)/*.c -- $(LINT_CFLAGS)
 
 .PHONY: check
 check:
