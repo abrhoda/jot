@@ -20,13 +20,22 @@ struct file {
   size_t line_count;
   char** lines;
 };
+
 /*
- * @brief frees the entire file struct
+ * @brief frees the lines in the file struct. Does NOT free the file struct itself.
  *
- * @param file The file struct to free. Will be set to NULL at the end of this
- * function.
+ * @param file Struct to have fields freed.
  */
-void free_file_lines(struct file* file);
+void free_file_fields(struct file* file);
+
+/*
+ * @brief frees the lines in the file struct before freeing the file struct itself.
+ * The file struct pointer will be set to NULL at the end of this function.
+ *
+ *
+ * @param file Struct to be freed.
+ */
+void free_file(struct file* file);
 
 /*
  * @brief reads entire file into the provided file stuct.

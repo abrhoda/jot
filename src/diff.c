@@ -15,12 +15,8 @@
  *      The D-path is an optimal solution.
  *      Stop
  */
-
-/* FIXME this is converting start_lines_count and end_lines_count to ints. they
- * should stay size_t (the correct type) and m, n, max, and d should all be
- * size_t*/
 static int shortest_edit(char** start_lines, size_t start_lines_count,
-                            char** end_lines, size_t end_lines_count) {
+                            char** end_lines, size_t end_lines_count, struct diff *diff) {
   /* NOTE: variable names follow the naming in the Myers Diff Algorithm paper 
    * NOLINTBEGIN(readability-identifier-length)
    */
@@ -86,7 +82,8 @@ static int shortest_edit(char** start_lines, size_t start_lines_count,
       v[k_centered] = x;
       if (x >= m && y >= n) {
         free(v);
-        return d;
+        diff->trace_length = d;
+        return DIFF_EC_SUCCESS;
       }
     }
   }
@@ -95,17 +92,27 @@ static int shortest_edit(char** start_lines, size_t start_lines_count,
   free(v);
   return DIFF_EC_UNREACHABLE;
 }
-void free_diff_result_buffer(struct diff_result *diff_result) {
-  if (diff_result == NULL) {
+
+void free_diff(struct diff *diff) {
+  size_t count = 0;
+  if (diff == NULL) {
     return;
   }
-  free(diff_result->buffer);
+  for (count = 0; count < diff->lines_length; ++count) {
+    free(diff->lines[count]);
+  }
+
+  for (count = 0; count < diff->trace_length; ++count) {
+    free(diff->trace[count]);
+  }
+
+  free(diff->lines);
 }
 
-struct diff_result myers_diff(char** start_lines, size_t start_lines_count, char** end_lines,
-                size_t end_lines_count) {
+enum diff_exit_code myers_diff(char** start_lines, size_t start_lines_count, char** end_lines,
+                size_t end_lines_count, struct diff *diff) {
   size_t count;
-  struct diff_result result = {NULL, 0, 0};
+  enum diff_exit_code diff_exit_code;
   printf("COMPARING:\n\n");
   for (count = 0; count < start_lines_count; ++count) {
     printf("%lu. %s\n", count, start_lines[count]);
@@ -115,7 +122,7 @@ struct diff_result myers_diff(char** start_lines, size_t start_lines_count, char
     printf("%lu. %s\n", count, end_lines[count]);
   }
 
-  result.exit_code = shortest_edit(start_lines, start_lines_count, end_lines, end_lines_count);
-  printf("Achieved in %lu edits\n", count);
-  return result;
+  diff_exit_code = shortest_edit(start_lines, start_lines_count, end_lines, end_lines_count, diff);
+  printf("Achieved in %lu edits\n", diff->trace_length);
+  return diff_exit_code;
 }

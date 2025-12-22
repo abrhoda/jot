@@ -8,8 +8,11 @@ int main(int argc, char** argv) {
       "jot - a diffing and version tool\n\tUsage: jot <file1> <file2>\n";
   struct file fstart;
   struct file fend;
-  /* TODO make a diff struct instead and pass it in by ref to the myers_diff function and return the result */
-  struct diff_result diff_result;
+  struct diff diff;
+  
+  enum file_exit_code file_ec;
+  enum diff_exit_code diff_ec;
+
   int result = 0;
 
   if (argc != 3) {
@@ -20,14 +23,26 @@ int main(int argc, char** argv) {
 
   printf("diffing <%s> and <%s>\n", argv[1], argv[2]);
 
-  result = write_file_lines_to_file(argv[1], &fstart);
-  result = write_file_lines_to_file(argv[2], &fend);
+  file_ec = write_file_lines_to_file(argv[1], &fstart);
+  if (file_ec != 0) {
+    result = file_ec;
+    goto cleanup;
+  }
+  file_ec = write_file_lines_to_file(argv[2], &fend);
+  if (file_ec != 0) {
+    result = file_ec;
+    goto cleanup;
+  }
+  diff_ec = myers_diff(fstart.lines, fstart.line_count,
+                          fend.lines, fend.line_count, &diff);
+  if (diff_ec != 0) {
+    result = diff_ec;
+    goto cleanup;
+  }
 
-  diff_result = myers_diff(fstart.lines, fstart.line_count,
-                          fend.lines, fend.line_count);
-
-  free_file_lines(&fstart);
-  free_file_lines(&fend);
-  free_diff_result_buffer(&diff_result);
-  return diff_result.exit_code;
+cleanup:
+  free_file_fields(&fstart);
+  free_file_fields(&fend);
+  free_diff(&diff);
+  return result;
 }

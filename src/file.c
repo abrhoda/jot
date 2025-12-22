@@ -18,8 +18,8 @@ enum file_exit_code write_file_lines_to_file(const char* filename,
   size_t line_count = 0;
   size_t line_len;
 
-  FILE* f = fopen(filename, "r");
-  if (f == NULL) {
+  FILE* fptr = fopen(filename, "r");
+  if (fptr == NULL) {
     fprintf(stderr, "Could not open %s file: %s\n", filename, strerror(errno));
     return FILE_EC_CANNOT_OPEN;
   }
@@ -27,14 +27,14 @@ enum file_exit_code write_file_lines_to_file(const char* filename,
   file->lines = malloc(initial_size * sizeof(char*));
   if (file->lines == NULL) {
     fprintf(stderr, "Error allocating for initial buffer\n");
-    fclose(f);
+    fclose(fptr);
     return FILE_EC_OUT_OF_MEMORY;
   }
   file->name = filename;
 
   /* check if line_len == 200 && buffer[line_len] != '\0' because it was an
    * overflow */
-  while (fgets(buffer, sizeof(buffer), f) != NULL) {
+  while (fgets(buffer, sizeof(buffer), fptr) != NULL) {
     line_len = strlen(buffer);
     /*
      * Swapping newline for null term
@@ -50,8 +50,8 @@ enum file_exit_code write_file_lines_to_file(const char* filename,
     if (file->lines[line_count] == NULL) {
       /* free all previously parsed strings */
       fprintf(stderr, "Error allocating line at %ld\n", line_count);
-      free_file_lines(file);
-      fclose(f);
+      free_file_fields(file);
+      fclose(fptr);
       return FILE_EC_OUT_OF_MEMORY;
     }
 
@@ -80,8 +80,8 @@ enum file_exit_code write_file_lines_to_file(const char* filename,
       if (temp_lines == NULL) {
         /* free all previously parsed strings */
         fprintf(stderr, "Error reallocating lines\n");
-        free_file_lines(file);
-        fclose(f);
+        free_file_fields(file);
+        fclose(fptr);
         return FILE_EC_OUT_OF_MEMORY;
       }
       file->lines = temp_lines;
@@ -96,19 +96,17 @@ enum file_exit_code write_file_lines_to_file(const char* filename,
       file->lines = temp_lines;
     }
   } else {
-    /* realistically, line will be null already here so this is slightly
-     * frivolous */
-    free(file);
-    file = NULL;
+    /* should be a noop because line_count <= 0 is only true when file has not data */
+    free_file_fields(file);
     fprintf(stderr, "Not lines found in file %s\n", filename);
     return FILE_EC_EMPTY_FILE;
   }
 
-  fclose(f);
+  fclose(fptr);
   return FILE_EC_SUCCESS;
 }
 
-void free_file_lines(struct file* file) {
+void free_file_fields(struct file* file) {
   size_t len = 0;
   if (file == NULL || file->lines == NULL) {
     return;
@@ -119,4 +117,21 @@ void free_file_lines(struct file* file) {
     ++len;
   }
   free(file->lines);
+  file->lines = NULL;
+}
+
+void free_file(struct file* file) {
+  size_t len = 0;
+  if (file == NULL || file->lines == NULL) {
+    return;
+  }
+
+  while (len < file->line_count) {
+    free(file->lines[len]);
+    ++len;
+  }
+  free(file->lines);
+  file->lines = NULL;
+  free(file);
+  file = NULL;
 }
